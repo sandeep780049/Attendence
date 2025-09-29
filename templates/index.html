@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fingerprint Attendance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Fingerprint Attendance</h1>
+  
+  <input type="text" id="studentName" placeholder="Enter Name for Registration">
+  <button onclick="registerStudent()">Register</button>
+  
+  <hr>
+  
+  <button onclick="markAttendance()">Scan Fingerprint & Mark Attendance</button>
+  <p id="result"></p>
+
+  <script>
+    async function registerStudent() {
+      let name = document.getElementById("studentName").value;
+      let credential_id = "cred_" + Math.random().toString(36).substring(2,10); // simulate ID
+      let res = await fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, credential_id })
+      });
+      let data = await res.json();
+      alert(data.message);
+      localStorage.setItem("credential_id", credential_id);
+    }
+
+    async function markAttendance() {
+      let credential_id = localStorage.getItem("credential_id");
+      if (!credential_id) {
+        document.getElementById("result").innerText = "Please register first.";
+        return;
+      }
+      let res = await fetch("/mark_attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential_id })
+      });
+      let data = await res.json();
+      document.getElementById("result").innerText = data.message;
+    }
+  </script>
+</body>
+</html>
