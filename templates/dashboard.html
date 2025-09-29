@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+</head>
+<body>
+  <h1>Attendance Dashboard</h1>
+  <table border="1" cellpadding="5">
+    <tr><th>Student</th><th>Date</th><th>Time</th></tr>
+    {% for row in records %}
+      <tr>
+        <td>{{ row[0] }}</td>
+        <td>{{ row[1] }}</td>
+        <td>{{ row[2] }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
