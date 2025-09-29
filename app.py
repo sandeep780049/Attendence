@@ -4,7 +4,6 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# Initialize DB
 def init_db():
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
@@ -20,12 +19,10 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Home (student page)
 @app.route('/')
 def index():
     return render_template("index.html")
 
-# Admin dashboard
 @app.route('/dashboard')
 def dashboard():
     conn = sqlite3.connect("database.db")
@@ -37,7 +34,7 @@ def dashboard():
     conn.close()
     return render_template("dashboard.html", records=records)
 
-# Register student (simulate WebAuthn for now)
+# Register student with credential_id
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -54,7 +51,7 @@ def register():
     conn.close()
     return jsonify({"message": f"{name} registered successfully!"})
 
-# Mark attendance
+# Mark attendance based on credential_id
 @app.route('/mark_attendance', methods=['POST'])
 def mark_attendance():
     data = request.get_json()
