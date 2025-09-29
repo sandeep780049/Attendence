@@ -8,7 +8,7 @@
   <h1>Fingerprint Attendance</h1>
   
   <input type="text" id="studentName" placeholder="Enter Name for Registration">
-  <button onclick="registerStudent()">Register</button>
+  <button onclick="registerStudent()">Register with Fingerprint</button>
   
   <hr>
   
@@ -18,30 +18,65 @@
   <script>
     async function registerStudent() {
       let name = document.getElementById("studentName").value;
-      let credential_id = "cred_" + Math.random().toString(36).substring(2,10); // simulate ID
-      let res = await fetch("/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, credential_id })
-      });
-      let data = await res.json();
-      alert(data.message);
-      localStorage.setItem("credential_id", credential_id);
+      if (!name) return alert("Enter a name!");
+
+      try {
+        // WebAuthn registration
+        const credential = await navigator.credentials.create({
+          publicKey: {
+            challenge: new Uint8Array(32),
+            rp: { name: "Attendance System" },
+            user: {
+              id: new Uint8Array(16),
+              name: name,
+              displayName: name
+            },
+            pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+            authenticatorSelection: { userVerification: "required" }
+          }
+        });
+
+        let credential_id = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+
+        let res = await fetch("/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, credential_id })
+        });
+
+        let data = await res.json();
+        alert(data.message);
+        localStorage.setItem("credential_id", credential_id);
+
+      } catch (err) {
+        alert("Registration failed: " + err);
+      }
     }
 
     async function markAttendance() {
-      let credential_id = localStorage.getItem("credential_id");
-      if (!credential_id) {
-        document.getElementById("result").innerText = "Please register first.";
-        return;
+      try {
+        // WebAuthn authentication
+        const assertion = await navigator.credentials.get({
+          publicKey: {
+            challenge: new Uint8Array(32),
+            userVerification: "required"
+          }
+        });
+
+        let credential_id = btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
+
+        let res = await fetch("/mark_attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credential_id })
+        });
+
+        let data = await res.json();
+        document.getElementById("result").innerText = data.message;
+
+      } catch (err) {
+        document.getElementById("result").innerText = "Authentication failed: " + err;
       }
-      let res = await fetch("/mark_attendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential_id })
-      });
-      let data = await res.json();
-      document.getElementById("result").innerText = data.message;
     }
   </script>
 </body>
